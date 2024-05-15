@@ -8,14 +8,14 @@ export const convertImageToBase64 = (file) => new Promise((resolve, reject) => {
     reader.readAsDataURL(file);
 });
 
-export const analyzeImageWithGPT4Vision = async(imageUrl) => {
+export const analyzeImageWithGPT4Vision = async (imageUrl) => {
     const payload = {
         model: "gpt-4-vision-preview",
         messages: [{
             role: "user",
             content: [{
                     type: "text",
-                    text: "Analyse cette image et extrait tout le texte que tu trouves. Il s'agit d'une liste de courses. Retourne les résultats sous forme de JSON structuré avec des catégories comme clés et les éléments comme valeurs de tableau. Exemple : {'fruits_vegetables': ['Citron', 'Pomme'], 'dairy_products': ['Lait', 'Fromage']}."
+                    text: "Analyse cette image et extrait tout le texte que tu trouves. Il s'agit d'une liste de courses. Retourne les résultats sous forme de JSON structuré avec des catégories comme clés et les éléments comme valeurs de tableau. Exemple : {'fruits': ['Citron', 'Pomme'], 'produits_laitier': ['Lait', 'Fromage']}. Enlève les doublons et corrige les fautes d'orthographe si nécessaire."
                 },
                 {
                     type: "image_url",
