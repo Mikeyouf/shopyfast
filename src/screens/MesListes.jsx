@@ -1,48 +1,15 @@
-import { Close } from "@mui/icons-material";
-import {
-  Button,
-  Card,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
-  Drawer,
-  TextField,
-  Typography,
-} from "@mui/material";
-import { styled } from "@mui/system";
+import { Typography } from "@mui/material";
 import { getAuth } from "firebase/auth";
 import { getDatabase, onValue, ref, remove, update } from "firebase/database";
 import React, { useEffect, useState } from "react";
+import { DragDropContext, Draggable, Droppable } from "react-beautiful-dnd";
 import Layout from "../components/layout/Layout";
-
-const StyledListCard = styled(Card)({
-  marginBottom: "10px",
-  padding: "15px",
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "space-between",
-  "&:hover": {
-    backgroundColor: "#f5f5f5",
-    cursor: "pointer",
-  },
-});
-
-const StyledSidePanel = styled(Drawer)({
-  "& .MuiDrawer-paper": {
-    width: "100%",
-    maxWidth: "600px",
-  },
-});
-
-const CloseButton = styled(Button)({
-  position: "absolute",
-  top: "10px",
-  right: "10px",
-});
+import RenameDialog from "../components/layout/RenameDialog";
+import SidePanel from "../components/layout/SidePanel";
+import StyledListCard from "../components/layout/StyledListCard";
 
 const MesListes = () => {
-  const [shoppingList, setShoppingList] = useState(null);
+  const [shoppingList, setShoppingList] = useState([]);
   const [selectedList, setSelectedList] = useState(null);
   const [selectedListId, setSelectedListId] = useState(null);
   const [sidePanelOpen, setSidePanelOpen] = useState(false);
@@ -61,11 +28,16 @@ const MesListes = () => {
 
     onValue(listRef, (snapshot) => {
       const data = snapshot.val();
-      setShoppingList(data);
       if (data) {
-        const names = Object.keys(data);
-        setExistingListNames(names);
+        const lists = Object.keys(data).map((key) => ({
+          id: key,
+          ...data[key],
+        }));
+        const orderedLists = lists.sort((a, b) => (a.order > b.order ? 1 : -1));
+        setShoppingList(orderedLists);
+        setExistingListNames(lists.map((list) => list.id));
       } else {
+        setShoppingList([]);
         setExistingListNames([]);
       }
     });
@@ -78,14 +50,11 @@ const MesListes = () => {
     const userId = user.uid;
     const listRef = ref(db, "users/" + userId + "/shoppingLists/" + listId);
     remove(listRef);
-    // Fermer le side panel après la suppression de la liste
     setSidePanelOpen(false);
   };
 
   const handleRenameList = (listId) => {
-    // Afficher le dialogue de renommage
     setRenameDialogOpen(true);
-    // Mettre à jour l'ID de la liste sélectionnée dans l'état
     setSelectedListId(listId);
   };
 
@@ -100,11 +69,9 @@ const MesListes = () => {
 
     const userId = user.uid;
 
-    // Récupérer le nom actuel de la liste
-    const currentListName = shoppingList[selectedListId]?.name;
-    console.log("currentListName : ", currentListName);
-
-    // Vérifier si le nouveau nom est déjà utilisé
+    const currentListName = shoppingList.find(
+      (list) => list.id === selectedListId
+    )?.name;
     if (
       existingListNames.includes(newListName) &&
       newListName !== currentListName
@@ -113,30 +80,26 @@ const MesListes = () => {
       return;
     }
 
-    // Créer un objet contenant les données de mise à jour
     const newData = {};
-    newData[newListName] = shoppingList[selectedListId];
+    newData[newListName] = {
+      ...shoppingList.find((list) => list.id === selectedListId),
+      name: newListName,
+    };
 
-    // Supprimer l'ancienne liste avec l'ID comme clé et ajouter la nouvelle avec le nom comme clé
     const updates = {
       [`users/${userId}/shoppingLists/${selectedListId}`]: null,
       [`users/${userId}/shoppingLists/${newListName}`]: newData[newListName],
     };
 
-    // Mettre à jour les données dans la base de données Firebase
     update(ref(db), updates)
       .then(() => {
-        // Mettre à jour le nom dans la liste locale
-        setShoppingList((prevShoppingList) => ({
-          ...prevShoppingList,
-          [newListName]: {
-            ...prevShoppingList[selectedListId],
-            name: newListName,
-          },
-          // Retirer l'ancienne liste de la liste locale
-          ...(delete prevShoppingList[selectedListId] && prevShoppingList),
-        }));
-        // Fermer le dialogue de renommage après la mise à jour réussie
+        setShoppingList((prevShoppingList) =>
+          prevShoppingList.map((list) =>
+            list.id === selectedListId
+              ? { ...list, id: newListName, name: newListName }
+              : list
+          )
+        );
         handleCloseRenameDialog();
       })
       .catch((error) => {
@@ -148,12 +111,39 @@ const MesListes = () => {
   };
 
   const handleOpenSidePanel = (listId) => {
-    setSelectedList(shoppingList[listId]);
+    setSelectedList(shoppingList.find((list) => list.id === listId));
     setSidePanelOpen(true);
   };
 
   const handleCloseSidePanel = () => {
     setSidePanelOpen(false);
+  };
+
+  const saveListOrder = (lists) => {
+    const user = auth.currentUser;
+    if (!user) return;
+
+    const userId = user.uid;
+    const updates = lists.reduce((acc, list, index) => {
+      acc[`users/${userId}/shoppingLists/${list.id}/order`] = index;
+      return acc;
+    }, {});
+
+    update(ref(db), updates).catch((error) => {
+      console.error(
+        "Erreur lors de la mise à jour de l'ordre des listes:",
+        error
+      );
+    });
+  };
+
+  const onDragEnd = (result) => {
+    if (!result.destination) return;
+    const items = Array.from(shoppingList);
+    const [reorderedItem] = items.splice(result.source.index, 1);
+    items.splice(result.destination.index, 0, reorderedItem);
+    setShoppingList(items);
+    saveListOrder(items);
   };
 
   return (
@@ -169,82 +159,50 @@ const MesListes = () => {
           Mes Listes de Courses
         </Typography>
         <div style={{ width: "100%" }}>
-          {shoppingList ? (
-            Object.keys(shoppingList).map((listId) => (
-              <StyledListCard
-                key={listId}
-                onClick={() => handleOpenSidePanel(listId)}
-              >
-                <Typography variant="h6">{listId}</Typography>
-                <div>
-                  <Button onClick={() => handleDeleteList(listId)}>
-                    Effacer
-                  </Button>
-                  <Button onClick={() => handleRenameList(listId)}>
-                    Renommer
-                  </Button>
+          <DragDropContext onDragEnd={onDragEnd}>
+            <Droppable droppableId="shoppingLists">
+              {(provided) => (
+                <div {...provided.droppableProps} ref={provided.innerRef}>
+                  {shoppingList.map((list, index) => (
+                    <Draggable
+                      key={list.id}
+                      draggableId={list.id}
+                      index={index}
+                    >
+                      {(provided) => (
+                        <div
+                          ref={provided.innerRef}
+                          {...provided.draggableProps}
+                          {...provided.dragHandleProps}
+                        >
+                          <StyledListCard
+                            listId={list.id}
+                            onOpenSidePanel={handleOpenSidePanel}
+                            onDelete={handleDeleteList}
+                            onRename={handleRenameList}
+                          />
+                        </div>
+                      )}
+                    </Draggable>
+                  ))}
+                  {provided.placeholder}
                 </div>
-              </StyledListCard>
-            ))
-          ) : (
-            <p>Chargement...</p>
-          )}
+              )}
+            </Droppable>
+          </DragDropContext>
         </div>
-        <StyledSidePanel
-          anchor="right"
+        <SidePanel
           open={sidePanelOpen}
           onClose={handleCloseSidePanel}
-        >
-          <div>
-            <CloseButton onClick={handleCloseSidePanel}>
-              <Close />
-            </CloseButton>
-            {selectedList ? (
-              <div>
-                <Typography variant="h5" gutterBottom>
-                  Contenu de la liste de courses :
-                </Typography>
-                {Object.entries(selectedList).map(([category, items]) => (
-                  <div key={category}>
-                    <Typography variant="subtitle1" gutterBottom>
-                      {category}
-                    </Typography>
-                    <ul>
-                      {items.map((item, index) => (
-                        <li key={index}>{item}</li>
-                      ))}
-                    </ul>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <Typography variant="body1" gutterBottom>
-                Cliquez sur l'appareil photo pour ajouter des articles à cette
-                liste.
-              </Typography>
-            )}
-          </div>
-        </StyledSidePanel>
-
-        <Dialog open={renameDialogOpen} onClose={handleCloseRenameDialog}>
-          <DialogTitle>Renommer la liste de courses</DialogTitle>
-          <DialogContent>
-            <TextField
-              autoFocus
-              margin="dense"
-              id="newListName"
-              label="Nouveau nom"
-              type="text"
-              fullWidth
-              value={newListName}
-              onChange={(e) => setNewListName(e.target.value)}
-            />
-          </DialogContent>
-          <DialogActions>
-            <Button onClick={handleCloseRenameDialog}>Annuler</Button>
-            <Button onClick={handleRenameConfirm}>Confirmer</Button>
-          </DialogActions>
-        </Dialog>
+          selectedList={selectedList}
+        />
+        <RenameDialog
+          open={renameDialogOpen}
+          onClose={handleCloseRenameDialog}
+          newListName={newListName}
+          setNewListName={setNewListName}
+          onRenameConfirm={handleRenameConfirm}
+        />
       </div>
     </Layout>
   );
