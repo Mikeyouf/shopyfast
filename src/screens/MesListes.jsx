@@ -112,6 +112,7 @@ const MesListes = () => {
 
   const handleOpenSidePanel = (listId) => {
     setSelectedList(shoppingList.find((list) => list.id === listId));
+    setSelectedListId(listId); // Ajoutez cette ligne
     setSidePanelOpen(true);
   };
 
@@ -195,6 +196,7 @@ const MesListes = () => {
           open={sidePanelOpen}
           onClose={handleCloseSidePanel}
           selectedList={selectedList}
+          listId={selectedListId}
         />
         <RenameDialog
           open={renameDialogOpen}

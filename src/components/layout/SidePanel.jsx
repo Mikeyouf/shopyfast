@@ -46,6 +46,8 @@ const SidePanel = ({ open, onClose, selectedList, listId }) => {
   const auth = getAuth();
   const db = getDatabase();
 
+  console.log("listId: ", listId);
+
   useEffect(() => {
     if (selectedList) {
       const newItems = Object.entries(selectedList).filter(
@@ -100,8 +102,20 @@ const SidePanel = ({ open, onClose, selectedList, listId }) => {
       setItems(updatedItems);
     }
 
+    // Réindexer les éléments après le drag-and-drop
+    const reindexedItems = updatedItems.map(([key, value]) => [
+      key,
+      value.map((item, index) =>
+        typeof item === "object"
+          ? { ...item, index }
+          : { name: item, completed: false, index }
+      ),
+    ]);
+
+    setItems(reindexedItems);
+
     // Save the updated order to Firebase
-    saveItemsToFirebase(updatedItems);
+    saveItemsToFirebase(reindexedItems);
   };
 
   const saveItemsToFirebase = (items) => {
@@ -131,20 +145,42 @@ const SidePanel = ({ open, onClose, selectedList, listId }) => {
         ? [key, value.filter((_, index) => index !== itemIndex)]
         : [key, value]
     );
-    setItems(newItems);
+
+    // Réindexer les éléments après la suppression
+    const reindexedItems = newItems.map(([key, value]) =>
+      key === category
+        ? [
+            key,
+            value.map((item, index) =>
+              typeof item === "object"
+                ? { ...item, index }
+                : { name: item, completed: false, index }
+            ),
+          ]
+        : [key, value]
+    );
+
+    setItems(reindexedItems);
 
     const user = auth.currentUser;
     if (user) {
       const userId = user.uid;
-      const updates = {
-        [`users/${userId}/shoppingLists/${listId}/${category}/${itemIndex}`]:
-          null,
-      };
+      const updates = {};
+
+      reindexedItems.forEach(([category, categoryItems]) => {
+        updates[`users/${userId}/shoppingLists/${listId}/${category}`] =
+          categoryItems;
+      });
+
       update(ref(db), updates);
     }
   };
 
   const handleRename = () => {
+    if (!editItem || !newItemName.trim()) {
+      return;
+    }
+
     const updatedItems = items.map(([key, value]) =>
       key === editItem.category
         ? [
@@ -158,6 +194,7 @@ const SidePanel = ({ open, onClose, selectedList, listId }) => {
         : [key, value]
     );
     setItems(updatedItems);
+    console.log("updatedItems : ", updatedItems);
 
     const user = auth.currentUser;
     if (user) {
@@ -166,7 +203,14 @@ const SidePanel = ({ open, onClose, selectedList, listId }) => {
         [`users/${userId}/shoppingLists/${listId}/${editItem.category}/${editItem.itemIndex}/name`]:
           newItemName,
       };
-      update(ref(db), updates);
+      console.log("updates : ", updates);
+      update(ref(db), updates)
+        .then(() => {
+          console.log("Item updated successfully");
+        })
+        .catch((error) => {
+          console.error("Error updating item: ", error);
+        });
     }
 
     setEditItem(null);
@@ -174,7 +218,16 @@ const SidePanel = ({ open, onClose, selectedList, listId }) => {
   };
 
   const toggleComplete = (category, itemIndex) => {
-    const newItems = items.map(([key, value]) =>
+    // Vérifiez si l'élément est en mode édition
+    if (
+      editItem &&
+      editItem.category === category &&
+      editItem.itemIndex === itemIndex
+    ) {
+      return;
+    }
+
+    const updatedItems = items.map(([key, value]) =>
       key === category
         ? [
             key,
@@ -188,7 +241,7 @@ const SidePanel = ({ open, onClose, selectedList, listId }) => {
           ]
         : [key, value]
     );
-    setItems(newItems);
+    setItems(updatedItems);
 
     const user = auth.currentUser;
     if (user) {
@@ -200,6 +253,17 @@ const SidePanel = ({ open, onClose, selectedList, listId }) => {
           completed: !item.completed,
         },
       };
+
+      // Si l'item est une chaîne de caractères, assurez-vous de le convertir en objet correctement
+      if (typeof item === "string") {
+        updates[
+          `users/${userId}/shoppingLists/${listId}/${category}/${itemIndex}`
+        ] = {
+          name: item,
+          completed: !item.completed,
+        };
+      }
+
       update(ref(db), updates);
     }
   };
@@ -221,7 +285,7 @@ const SidePanel = ({ open, onClose, selectedList, listId }) => {
                     </Typography>
                     {categoryItems.map((item, index) => (
                       <Draggable
-                        key={index}
+                        key={`${category}-${index}`}
                         draggableId={`${category}-${index}`}
                         index={index}
                       >
