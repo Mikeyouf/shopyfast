@@ -17,6 +17,7 @@ const StyledDrawer = styled(Drawer)({
   "& .MuiDrawer-paper": {
     width: "100%",
     maxWidth: "600px",
+    padding: "8px",
   },
 });
 
@@ -41,18 +42,34 @@ const StyledCard = styled(Card)({
   },
 });
 
+const CategoryCard = styled(Card)({
+  marginBottom: "20px",
+  padding: "10px",
+  backgroundColor: "#e0e0e0",
+});
+
+const CategoryTitle = styled(Typography)({
+  fontWeight: "bold",
+});
+
 const SidePanel = ({ open, onClose, selectedList, listId }) => {
   const [items, setItems] = useState([]);
   const auth = getAuth();
   const db = getDatabase();
-
-  console.log("listId: ", listId);
 
   useEffect(() => {
     if (selectedList) {
       const newItems = Object.entries(selectedList).filter(
         ([key, value]) => key !== "order" && Array.isArray(value)
       );
+
+      // Trier les catégories en fonction de orderCategory
+      newItems.sort((a, b) => {
+        const orderA = selectedList.orderCategory?.[a[0]] ?? 0;
+        const orderB = selectedList.orderCategory?.[b[0]] ?? 0;
+        return orderA - orderB;
+      });
+
       setItems(newItems);
     }
   }, [selectedList]);
@@ -61,61 +78,81 @@ const SidePanel = ({ open, onClose, selectedList, listId }) => {
   const [newItemName, setNewItemName] = useState("");
 
   const onDragEnd = (result) => {
-    if (!result.destination) return;
+    const { destination, source, type } = result;
 
-    const sourceIndex = result.source.index;
-    const destinationIndex = result.destination.index;
-    const sourceCategory = result.source.droppableId;
-    const destinationCategory = result.destination.droppableId;
+    if (!destination) {
+      return;
+    }
 
-    let updatedItems = [];
+    if (
+      destination.droppableId === source.droppableId &&
+      destination.index === source.index
+    ) {
+      return;
+    }
 
-    if (sourceCategory === destinationCategory) {
-      // Reorder within the same category
-      const categoryItems = items.find(([key]) => key === sourceCategory)[1];
-      const [movedItem] = categoryItems.splice(sourceIndex, 1);
-      categoryItems.splice(destinationIndex, 0, movedItem);
+    if (type === "CATEGORY") {
+      const newItems = Array.from(items);
+      const [movedCategory] = newItems.splice(source.index, 1);
+      newItems.splice(destination.index, 0, movedCategory);
+      setItems(newItems);
+      saveCategoriesOrderToFirebase(newItems);
+      return;
+    }
+
+    const start = items.find(([key]) => key === source.droppableId);
+    const finish = items.find(([key]) => key === destination.droppableId);
+
+    if (!start || !finish) {
+      console.error("Start or finish is undefined");
+      return;
+    }
+
+    let updatedItems = [...items];
+
+    if (start === finish) {
+      const categoryItems = Array.from(start[1]);
+      const [movedItem] = categoryItems.splice(source.index, 1);
+      categoryItems.splice(destination.index, 0, movedItem);
 
       updatedItems = items.map(([key, value]) =>
-        key === sourceCategory ? [key, categoryItems] : [key, value]
+        key === source.droppableId ? [key, categoryItems] : [key, value]
       );
-      setItems(updatedItems);
     } else {
-      // Move between categories
-      const sourceItems = items.find(([key]) => key === sourceCategory)[1];
-      const destinationItems = items.find(
-        ([key]) => key === destinationCategory
-      )[1];
-
-      const [movedItem] = sourceItems.splice(sourceIndex, 1);
-      destinationItems.splice(destinationIndex, 0, movedItem);
+      const startItems = Array.from(start[1]);
+      const finishItems = Array.from(finish[1]);
+      const [movedItem] = startItems.splice(source.index, 1);
+      finishItems.splice(destination.index, 0, movedItem);
 
       updatedItems = items.map(([key, value]) => {
-        if (key === sourceCategory) {
-          return [key, sourceItems];
-        } else if (key === destinationCategory) {
-          return [key, destinationItems];
+        if (key === source.droppableId) {
+          return [key, startItems];
+        }
+        if (key === destination.droppableId) {
+          return [key, finishItems];
         }
         return [key, value];
       });
-
-      setItems(updatedItems);
     }
 
-    // Réindexer les éléments après le drag-and-drop
-    const reindexedItems = updatedItems.map(([key, value]) => [
-      key,
-      value.map((item, index) =>
-        typeof item === "object"
-          ? { ...item, index }
-          : { name: item, completed: false, index }
-      ),
-    ]);
+    setItems(updatedItems);
+    saveItemsToFirebase(updatedItems);
+  };
 
-    setItems(reindexedItems);
+  const saveCategoriesOrderToFirebase = (categories) => {
+    const user = auth.currentUser;
+    if (!user) return;
 
-    // Save the updated order to Firebase
-    saveItemsToFirebase(reindexedItems);
+    const userId = user.uid;
+    const updates = {};
+
+    categories.forEach(([category], index) => {
+      updates[
+        `users/${userId}/shoppingLists/${listId}/orderCategory/${category}`
+      ] = index;
+    });
+
+    update(ref(db), updates);
   };
 
   const saveItemsToFirebase = (items) => {
@@ -194,7 +231,6 @@ const SidePanel = ({ open, onClose, selectedList, listId }) => {
         : [key, value]
     );
     setItems(updatedItems);
-    console.log("updatedItems : ", updatedItems);
 
     const user = auth.currentUser;
     if (user) {
@@ -203,7 +239,6 @@ const SidePanel = ({ open, onClose, selectedList, listId }) => {
         [`users/${userId}/shoppingLists/${listId}/${editItem.category}/${editItem.itemIndex}/name`]:
           newItemName,
       };
-      console.log("updates : ", updates);
       update(ref(db), updates)
         .then(() => {
           console.log("Item updated successfully");
@@ -218,7 +253,6 @@ const SidePanel = ({ open, onClose, selectedList, listId }) => {
   };
 
   const toggleComplete = (category, itemIndex) => {
-    // Vérifiez si l'élément est en mode édition
     if (
       editItem &&
       editItem.category === category &&
@@ -254,7 +288,6 @@ const SidePanel = ({ open, onClose, selectedList, listId }) => {
         },
       };
 
-      // Si l'item est une chaîne de caractères, assurez-vous de le convertir en objet correctement
       if (typeof item === "string") {
         updates[
           `users/${userId}/shoppingLists/${listId}/${category}/${itemIndex}`
@@ -276,86 +309,128 @@ const SidePanel = ({ open, onClose, selectedList, listId }) => {
         </CloseButton>
         {items.length > 0 ? (
           <DragDropContext onDragEnd={onDragEnd}>
-            {items.map(([category, categoryItems]) => (
-              <Droppable droppableId={category} key={category}>
-                {(provided) => (
-                  <div {...provided.droppableProps} ref={provided.innerRef}>
-                    <Typography variant="h5" gutterBottom>
-                      {category}
-                    </Typography>
-                    {categoryItems.map((item, index) => (
-                      <Draggable
-                        key={`${category}-${index}`}
-                        draggableId={`${category}-${index}`}
-                        index={index}
-                      >
-                        {(provided) => (
-                          <div
-                            ref={provided.innerRef}
-                            {...provided.draggableProps}
-                            {...provided.dragHandleProps}
-                          >
-                            <StyledCard
-                              className={
-                                typeof item === "object" && item.completed
-                                  ? "completed"
-                                  : ""
-                              }
-                              onClick={() => toggleComplete(category, index)}
-                            >
-                              {editItem?.category === category &&
-                              editItem.itemIndex === index ? (
-                                <TextField
-                                  value={newItemName}
-                                  onChange={(e) =>
-                                    setNewItemName(e.target.value)
-                                  }
-                                />
-                              ) : (
-                                <Typography variant="h6">
-                                  {typeof item === "object" ? item.name : item}
-                                </Typography>
-                              )}
-                              <div>
-                                {editItem?.category === category &&
-                                editItem.itemIndex === index ? (
-                                  <IconButton
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      handleRename();
-                                    }}
-                                  >
-                                    <Check />
-                                  </IconButton>
-                                ) : (
-                                  <IconButton
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      handleEdit(category, index);
-                                    }}
-                                  >
-                                    <Edit />
-                                  </IconButton>
-                                )}
-                                <IconButton
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleDelete(category, index);
-                                  }}
+            <Droppable droppableId="categories" type="CATEGORY">
+              {(provided) => (
+                <div {...provided.droppableProps} ref={provided.innerRef}>
+                  {items.map(([category, categoryItems], index) => (
+                    <Draggable
+                      key={category}
+                      draggableId={category}
+                      index={index}
+                    >
+                      {(provided) => (
+                        <div
+                          ref={provided.innerRef}
+                          {...provided.draggableProps}
+                          {...provided.dragHandleProps}
+                        >
+                          <CategoryCard>
+                            <CategoryTitle variant="h5" gutterBottom>
+                              {category}
+                            </CategoryTitle>
+                            <Droppable droppableId={category} type="ITEM">
+                              {(provided) => (
+                                <div
+                                  {...provided.droppableProps}
+                                  ref={provided.innerRef}
                                 >
-                                  <Delete />
-                                </IconButton>
-                              </div>
-                            </StyledCard>
-                          </div>
-                        )}
-                      </Draggable>
-                    ))}
-                    {provided.placeholder}
-                  </div>
-                )}
-              </Droppable>
-            ))}
+                                  {categoryItems.map((item, itemIndex) => (
+                                    <Draggable
+                                      key={`${category}-${itemIndex}`}
+                                      draggableId={`${category}-${itemIndex}`}
+                                      index={itemIndex}
+                                    >
+                                      {(provided) => (
+                                        <div
+                                          ref={provided.innerRef}
+                                          {...provided.draggableProps}
+                                          {...provided.dragHandleProps}
+                                        >
+                                          <StyledCard
+                                            className={
+                                              typeof item === "object" &&
+                                              item.completed
+                                                ? "completed"
+                                                : ""
+                                            }
+                                            onClick={() =>
+                                              toggleComplete(
+                                                category,
+                                                itemIndex
+                                              )
+                                            }
+                                          >
+                                            {editItem?.category === category &&
+                                            editItem.itemIndex === itemIndex ? (
+                                              <TextField
+                                                value={newItemName}
+                                                onChange={(e) =>
+                                                  setNewItemName(e.target.value)
+                                                }
+                                              />
+                                            ) : (
+                                              <Typography variant="h6">
+                                                {typeof item === "object"
+                                                  ? item.name
+                                                  : item}
+                                              </Typography>
+                                            )}
+                                            <div>
+                                              {editItem?.category ===
+                                                category &&
+                                              editItem.itemIndex ===
+                                                itemIndex ? (
+                                                <IconButton
+                                                  onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    handleRename();
+                                                  }}
+                                                >
+                                                  <Check />
+                                                </IconButton>
+                                              ) : (
+                                                <IconButton
+                                                  onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    handleEdit(
+                                                      category,
+                                                      itemIndex
+                                                    );
+                                                  }}
+                                                >
+                                                  <Edit />
+                                                </IconButton>
+                                              )}
+                                              <IconButton
+                                                onClick={(e) => {
+                                                  e.stopPropagation();
+                                                  handleDelete(
+                                                    category,
+                                                    itemIndex
+                                                  );
+                                                }}
+                                              >
+                                                <Delete />
+                                              </IconButton>
+                                            </div>
+                                          </StyledCard>
+                                        </div>
+                                      )}
+                                    </Draggable>
+                                  ))}
+                                  {provided.placeholder}
+                                </div>
+                              )}
+                            </Droppable>
+                          </CategoryCard>
+                        </div>
+                      )}
+                    </Draggable>
+                  ))}
+                  {provided.placeholder}
+                </div>
+              )}
+            </Droppable>
           </DragDropContext>
         ) : (
           <Typography variant="body1" gutterBottom>
