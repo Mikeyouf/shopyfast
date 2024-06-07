@@ -1,6 +1,6 @@
 /* eslint-disable no-restricted-globals */
 
-const CACHE_NAME = "my-app-cache";
+const CACHE_NAME = "ShopyFast";
 const urlsToCache = ["/", "/index.html", "/static/js/bundle.js"];
 
 // Installation du service worker
