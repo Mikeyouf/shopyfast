@@ -6,6 +6,19 @@ import "./index.css";
 import reportWebVitals from "./reportWebVitals";
 import * as serviceWorkerRegistration from "./serviceWorkerRegistration";
 
+fetch("/static/js/main.[hash].js")
+  .then((response) => response.text())
+  .then((text) => {
+    if (text.startsWith("<!DOCTYPE html>")) {
+      console.error(
+        "Received HTML instead of JavaScript. Check your paths and redirects."
+      );
+    } else {
+      console.log("JavaScript file loaded successfully.");
+    }
+  })
+  .catch((error) => console.error("Error fetching JavaScript file:", error));
+
 const root = ReactDOM.createRoot(document.getElementById("root"));
 root.render(
   <FirebaseProvider>
