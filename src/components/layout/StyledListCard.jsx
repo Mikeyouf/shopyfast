@@ -14,9 +14,15 @@ const StyledCard = styled(Card)({
   },
 });
 
-const StyledListCard = ({ listId, onOpenSidePanel, onDelete, onRename }) => (
+const StyledListCard = ({
+  listId,
+  listName,
+  onOpenSidePanel,
+  onDelete,
+  onRename,
+}) => (
   <StyledCard onClick={() => onOpenSidePanel(listId)}>
-    <Typography variant="h6">{listId}</Typography>
+    <Typography variant="h6">{listName ? listName : listId}</Typography>
     <div>
       <Button
         onClick={(e) => {

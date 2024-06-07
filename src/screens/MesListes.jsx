@@ -80,24 +80,15 @@ const MesListes = () => {
       return;
     }
 
-    const newData = {};
-    newData[newListName] = {
-      ...shoppingList.find((list) => list.id === selectedListId),
-      name: newListName,
-    };
-
     const updates = {
-      [`users/${userId}/shoppingLists/${selectedListId}`]: null,
-      [`users/${userId}/shoppingLists/${newListName}`]: newData[newListName],
+      [`users/${userId}/shoppingLists/${selectedListId}/name`]: newListName,
     };
 
     update(ref(db), updates)
       .then(() => {
         setShoppingList((prevShoppingList) =>
           prevShoppingList.map((list) =>
-            list.id === selectedListId
-              ? { ...list, id: newListName, name: newListName }
-              : list
+            list.id === selectedListId ? { ...list, name: newListName } : list
           )
         );
         handleCloseRenameDialog();
@@ -178,6 +169,7 @@ const MesListes = () => {
                         >
                           <StyledListCard
                             listId={list.id}
+                            listName={list.name}
                             onOpenSidePanel={handleOpenSidePanel}
                             onDelete={handleDeleteList}
                             onRename={handleRenameList}

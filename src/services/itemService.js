@@ -112,20 +112,17 @@ export const handleRename = (editItem, newItemName, items, setItems, setEditItem
   }
 
   const updatedItems = items.map(([key, value]) =>
-    key === editItem.category ?
-    [
+    key === editItem.category ? [
       key,
       value.map((item, index) =>
-        index === editItem.itemIndex ?
-        {
+        index === editItem.itemIndex ? {
           ...item,
           name: newItemName
         } // Ne changez pas l'état `completed`
         :
         item
       ),
-    ] :
-    [key, value]
+    ] : [key, value]
   );
 
   setItems(updatedItems);
@@ -198,5 +195,51 @@ export const toggleComplete = (category, itemIndex, items, setItems, listId) => 
     }
 
     update(ref(db), updates);
+  }
+};
+
+export const handleRenameCategory = (
+  oldCategoryName,
+  newCategoryName,
+  items,
+  setItems,
+  listId
+) => {
+  if (!newCategoryName.trim()) {
+    console.error("Le nouveau nom de la catégorie ne peut pas être vide.");
+    return;
+  }
+
+  // Vérifier si la catégorie existe déjà
+  const categoryExists = items.some(([key]) => key === newCategoryName);
+  if (categoryExists) {
+    console.error("Une catégorie avec ce nom existe déjà.");
+    return;
+  }
+
+  // Mettre à jour les items localement
+  const updatedItems = items.map(([key, value]) =>
+    key === oldCategoryName ? [newCategoryName, value] : [key, value]
+  );
+  setItems(updatedItems);
+
+  // Mettre à jour Firebase
+  const auth = getAuth();
+  const db = getDatabase();
+  const user = auth.currentUser;
+  if (user) {
+    const userId = user.uid;
+    const updates = {
+      [`users/${userId}/shoppingLists/${listId}/orderCategory/${newCategoryName}`]: items.find(([key]) => key === oldCategoryName)[1],
+      [`users/${userId}/shoppingLists/${listId}/${newCategoryName}`]: items.find(([key]) => key === oldCategoryName)[1],
+      [`users/${userId}/shoppingLists/${listId}/${oldCategoryName}`]: null,
+    };
+    update(ref(db), updates)
+      .then(() => {
+        console.log("Catégorie renommée avec succès");
+      })
+      .catch((error) => {
+        console.error("Erreur lors du renommage de la catégorie : ", error);
+      });
   }
 };
