@@ -2,6 +2,7 @@
   "name": "shopyfast",
   "version": "0.1.0",
   "private": true,
+  "homepage": "https://Mikeyouf.github.io/shopyfast",
   "dependencies": {
     "@emotion/react": "^11.11.3",
     "@emotion/styled": "^11.11.0",
@@ -49,7 +50,6 @@
       "last 1 safari version"
     ]
   },
-  "homepage": ".",
   "devDependencies": {
     "gh-pages": "^3.2.3"
   }
