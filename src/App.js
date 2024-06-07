@@ -1,10 +1,10 @@
-import { useEffect, useState } from "react";
 import { CircularProgress } from "@mui/material";
+import { useEffect, useState } from "react";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
+import AuthChecker from "./components/auth/AuthChecker";
+import Center from "./components/utils/Center";
 import { auth } from "./config/firebase";
 import routes from "./config/routes";
-import Center from "./components/utils/Center";
-import AuthChecker from "./components/auth/AuthChecker";
 
 function App() {
   const [loading, setLoading] = useState(true);
@@ -20,16 +20,19 @@ function App() {
     });
   }, []);
 
-  if (loading)
+  if (loading) {
     return (
       <Center>
         <CircularProgress />
       </Center>
     );
+  }
+
+  const basename = process.env.REACT_APP_ENV === "github" ? "/shopyfast" : "";
 
   return (
     <div>
-      <BrowserRouter basename={process.env.PUBLIC_URL}>
+      <BrowserRouter basename={basename}>
         <Routes>
           {routes.map((route, index) => (
             <Route

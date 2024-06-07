@@ -29,7 +29,7 @@
     "serve": "serve -s build",
     "build-and-serve": "npm run build && npm run serve",
     "predeploy": "npm run build",
-    "deploy": "gh-pages -d build",
+    "deploy": "REACT_APP_ENV=github gh-pages -d build",
     "pull": "git pull && npm i && npm start"
   },
   "eslintConfig": {
