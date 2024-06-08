@@ -2,7 +2,7 @@
   "name": "shopyfast",
   "version": "0.1.0",
   "private": true,
-  "homepage": "https://Mikeyouf.github.io/shopyfast",
+  "homepage": "https://shopyfast.netlify.app",
   "dependencies": {
     "@emotion/react": "^11.11.3",
     "@emotion/styled": "^11.11.0",
@@ -29,7 +29,6 @@
     "serve": "serve -s build",
     "build-and-serve": "npm run build && npm run serve",
     "predeploy": "npm run build",
-    "deploy": "gh-pages -d build",
     "pull": "git pull && npm i && npm start"
   },
   "eslintConfig": {
