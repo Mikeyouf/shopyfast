@@ -28,11 +28,9 @@ function App() {
     );
   }
 
-  const basename = process.env.REACT_APP_ENV === "github" ? "/shopyfast" : "";
-
   return (
     <div>
-      <BrowserRouter basename={basename}>
+      <BrowserRouter basename="/">
         <Routes>
           {routes.map((route, index) => (
             <Route
