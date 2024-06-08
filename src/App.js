@@ -1,6 +1,6 @@
 import { CircularProgress } from "@mui/material";
 import { useEffect, useState } from "react";
-import { Route, HashRouter as Router, Routes } from "react-router-dom";
+import { Route, BrowserRouter as Router, Routes } from "react-router-dom";
 import AuthChecker from "./components/auth/AuthChecker";
 import Center from "./components/utils/Center";
 import { auth } from "./config/firebase";
