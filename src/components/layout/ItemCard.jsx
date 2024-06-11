@@ -1,6 +1,6 @@
 import { Check, Delete, Edit } from "@mui/icons-material";
 import { IconButton, TextField, Typography } from "@mui/material";
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Draggable } from "react-beautiful-dnd";
 import { StyledCard } from "./StyledComponents";
 
@@ -21,6 +21,7 @@ const ItemCard = ({
   items,
 }) => {
   const checkButtonRef = useRef(null);
+  const [isEditing, setIsEditing] = useState(false);
 
   useEffect(() => {
     const handleClick = (e) => {
@@ -35,6 +36,7 @@ const ItemCard = ({
         setNewItemName,
         listId
       );
+      setIsEditing(false); // Reset isEditing state after rename
     };
 
     const button = checkButtonRef.current;
@@ -74,15 +76,23 @@ const ItemCard = ({
             className={
               typeof item === "object" && item.completed ? "completed" : ""
             }
-            onClick={() =>
-              toggleComplete(category, itemIndex, items, setItems, listId)
-            }
+            onClick={(e) => {
+              if (!isEditing) {
+                e.stopPropagation();
+                toggleComplete(category, itemIndex, items, setItems, listId);
+              }
+            }}
           >
             {editItem?.category === category &&
             editItem.itemIndex === itemIndex ? (
               <TextField
                 value={newItemName}
-                onChange={(e) => setNewItemName(e.target.value)}
+                onChange={(e) => {
+                  e.stopPropagation();
+                  setNewItemName(e.target.value);
+                }}
+                onFocus={() => setIsEditing(true)}
+                onBlur={() => setIsEditing(false)}
               />
             ) : (
               <Typography variant="h6">
@@ -92,7 +102,10 @@ const ItemCard = ({
             <div>
               {editItem?.category === category &&
               editItem.itemIndex === itemIndex ? (
-                <IconButton ref={checkButtonRef}>
+                <IconButton
+                  ref={checkButtonRef}
+                  onClick={(e) => e.stopPropagation()}
+                >
                   <Check />
                 </IconButton>
               ) : (
@@ -106,6 +119,7 @@ const ItemCard = ({
                       setEditItem,
                       setNewItemName
                     );
+                    setIsEditing(true);
                   }}
                 >
                   <Edit />
