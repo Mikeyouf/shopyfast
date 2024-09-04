@@ -1,5 +1,6 @@
 import { Close } from "@mui/icons-material";
 import { Typography } from "@mui/material";
+import { styled } from "@mui/system";
 import React, { useEffect, useState } from "react";
 import { DragDropContext, Droppable } from "react-beautiful-dnd";
 import {
@@ -12,6 +13,14 @@ import {
 } from "../../services/itemService";
 import Category from "./Category";
 import { CloseButton, StyledDrawer } from "./StyledComponents";
+
+const MobileStyledDrawer = styled(StyledDrawer)({
+  "@media (max-width: 767px)": {
+    width: "100vw", // Utilisez 100vw pour occuper toute la largeur de l'écran
+    left: 0,
+    right: 0,
+  },
+});
 
 const SidePanel = ({ open, onClose, selectedList, listId }) => {
   const [items, setItems] = useState([]);
@@ -98,7 +107,7 @@ const SidePanel = ({ open, onClose, selectedList, listId }) => {
   };
 
   return (
-    <StyledDrawer anchor="right" open={open} onClose={onClose}>
+    <MobileStyledDrawer anchor="right" open={open} onClose={onClose}>
       <div>
         <CloseButton onClick={onClose}>
           <Close />
@@ -149,7 +158,7 @@ const SidePanel = ({ open, onClose, selectedList, listId }) => {
           </Typography>
         )}
       </div>
-    </StyledDrawer>
+    </MobileStyledDrawer>
   );
 };
 

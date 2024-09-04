@@ -8,14 +8,24 @@ import RenameDialog from "../components/layout/RenameDialog";
 import SidePanel from "../components/layout/SidePanel";
 import StyledListCard from "../components/layout/StyledListCard";
 
-const MesListes = () => {
-  const [shoppingList, setShoppingList] = useState([]);
-  const [selectedList, setSelectedList] = useState(null);
-  const [selectedListId, setSelectedListId] = useState(null);
-  const [sidePanelOpen, setSidePanelOpen] = useState(false);
-  const [renameDialogOpen, setRenameDialogOpen] = useState(false);
-  const [newListName, setNewListName] = useState("");
-  const [existingListNames, setExistingListNames] = useState([]);
+const MesListes = ({
+  shoppingList = [],
+  selectedList = null,
+  selectedListId = null,
+  sidePanelOpen = false,
+  renameDialogOpen = false,
+  newListName = "",
+  existingListNames = [],
+}) => {
+  const [shoppingListState, setShoppingList] = useState(shoppingList);
+  const [selectedListState, setSelectedList] = useState(selectedList);
+  const [selectedListIdState, setSelectedListId] = useState(selectedListId);
+  const [sidePanelOpenState, setSidePanelOpen] = useState(sidePanelOpen);
+  const [renameDialogOpenState, setRenameDialogOpen] =
+    useState(renameDialogOpen);
+  const [newListNameState, setNewListName] = useState(newListName);
+  const [existingListNamesState, setExistingListNames] =
+    useState(existingListNames);
   const auth = getAuth();
   const db = getDatabase();
 
@@ -53,9 +63,10 @@ const MesListes = () => {
     setSidePanelOpen(false);
   };
 
-  const handleRenameList = (listId) => {
+  const handleRenameList = (listId, listName) => {
     setRenameDialogOpen(true);
     setSelectedListId(listId);
+    setNewListName(listName);
   };
 
   const handleCloseRenameDialog = () => {
@@ -65,30 +76,33 @@ const MesListes = () => {
 
   const handleRenameConfirm = () => {
     const user = auth.currentUser;
-    if (!user || !selectedListId) return;
+    if (!user || !selectedListIdState) return;
 
     const userId = user.uid;
 
-    const currentListName = shoppingList.find(
-      (list) => list.id === selectedListId
+    const currentListName = shoppingListState.find(
+      (list) => list.id === selectedListIdState
     )?.name;
     if (
-      existingListNames.includes(newListName) &&
-      newListName !== currentListName
+      existingListNamesState.includes(newListNameState) &&
+      newListNameState !== currentListName
     ) {
       alert("Ce nom de liste est déjà utilisé. Veuillez en choisir un autre.");
       return;
     }
 
     const updates = {
-      [`users/${userId}/shoppingLists/${selectedListId}/name`]: newListName,
+      [`users/${userId}/shoppingLists/${selectedListIdState}/name`]:
+        newListNameState,
     };
 
     update(ref(db), updates)
       .then(() => {
         setShoppingList((prevShoppingList) =>
           prevShoppingList.map((list) =>
-            list.id === selectedListId ? { ...list, name: newListName } : list
+            list.id === selectedListIdState
+              ? { ...list, name: newListNameState }
+              : list
           )
         );
         handleCloseRenameDialog();
@@ -102,8 +116,8 @@ const MesListes = () => {
   };
 
   const handleOpenSidePanel = (listId) => {
-    setSelectedList(shoppingList.find((list) => list.id === listId));
-    setSelectedListId(listId); // Ajoutez cette ligne
+    setSelectedList(shoppingListState.find((list) => list.id === listId));
+    setSelectedListId(listId);
     setSidePanelOpen(true);
   };
 
@@ -131,7 +145,7 @@ const MesListes = () => {
 
   const onDragEnd = (result) => {
     if (!result.destination) return;
-    const items = Array.from(shoppingList);
+    const items = Array.from(shoppingListState);
     const [reorderedItem] = items.splice(result.source.index, 1);
     items.splice(result.destination.index, 0, reorderedItem);
     setShoppingList(items);
@@ -155,7 +169,7 @@ const MesListes = () => {
             <Droppable droppableId="shoppingLists">
               {(provided) => (
                 <div {...provided.droppableProps} ref={provided.innerRef}>
-                  {shoppingList.map((list, index) => (
+                  {shoppingListState.map((list, index) => (
                     <Draggable
                       key={list.id}
                       draggableId={list.id}
@@ -172,7 +186,9 @@ const MesListes = () => {
                             listName={list.name}
                             onOpenSidePanel={handleOpenSidePanel}
                             onDelete={handleDeleteList}
-                            onRename={handleRenameList}
+                            onRename={() =>
+                              handleRenameList(list.id, list.name)
+                            }
                           />
                         </div>
                       )}
@@ -185,17 +201,18 @@ const MesListes = () => {
           </DragDropContext>
         </div>
         <SidePanel
-          open={sidePanelOpen}
+          open={sidePanelOpenState}
           onClose={handleCloseSidePanel}
-          selectedList={selectedList}
-          listId={selectedListId}
+          selectedList={selectedListState}
+          listId={selectedListIdState}
         />
         <RenameDialog
-          open={renameDialogOpen}
+          open={renameDialogOpenState}
           onClose={handleCloseRenameDialog}
-          newListName={newListName}
+          newListName={newListNameState}
           setNewListName={setNewListName}
           onRenameConfirm={handleRenameConfirm}
+          currentListName={newListNameState} // Passez le nom actuel de la liste ici
         />
       </div>
     </Layout>

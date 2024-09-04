@@ -2,7 +2,8 @@ import { Check, Delete, Edit } from "@mui/icons-material";
 import { IconButton, TextField } from "@mui/material";
 import React, { useState } from "react";
 import { Draggable, Droppable } from "react-beautiful-dnd";
-import { handleRenameCategory } from "../../services/itemService"; // Importez la fonction
+import { handleRenameCategory } from "../../services/itemService";
+import { useToast } from "../layout/Toast"; // Importez le hook useToast
 import ItemCard from "./ItemCard";
 import { CategoryCard, CategoryTitle } from "./StyledComponents";
 
@@ -23,20 +24,26 @@ const Category = ({
   items,
   handleAddCategory,
 }) => {
+  const toast = useToast(); // Appel inconditionnel de useToast
   const [isEditing, setIsEditing] = useState(false);
   const [categoryName, setCategoryName] = useState(category);
 
   const handleCategoryRename = () => {
-    handleRenameCategory(category, categoryName, items, setItems, listId);
+    handleRenameCategory(
+      category,
+      categoryName,
+      items,
+      setItems,
+      listId,
+      toast // Utilisez le hook useToast ici
+    );
     setIsEditing(false);
   };
 
-  const onDelete = (e) => {
-    e.stopPropagation();
-    if (category) {
-      handleDelete(category, null, items, setItems, listId);
-    } else {
-      console.error("Category is undefined or null");
+  const handleKeyDown = (e) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      handleCategoryRename();
     }
   };
 
@@ -54,6 +61,7 @@ const Category = ({
                 <TextField
                   value={categoryName}
                   onChange={(e) => setCategoryName(e.target.value)}
+                  onKeyDown={handleKeyDown}
                   autoFocus
                 />
               ) : (
@@ -61,19 +69,15 @@ const Category = ({
                   {category}
                 </CategoryTitle>
               )}
+              <IconButton onClick={() => setIsEditing(!isEditing)}>
+                {isEditing ? <Check /> : <Edit />}
+              </IconButton>
               <IconButton
                 onClick={(e) => {
                   e.stopPropagation();
-                  if (isEditing) {
-                    handleCategoryRename();
-                  } else {
-                    setIsEditing(true);
-                  }
+                  handleDelete(category, null, items, setItems, listId);
                 }}
               >
-                {isEditing ? <Check /> : <Edit />}
-              </IconButton>
-              <IconButton onClick={onDelete}>
                 <Delete />
               </IconButton>
             </div>

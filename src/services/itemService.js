@@ -101,8 +101,9 @@ export const handleDelete = (category, itemIndex, items, setItems, listId) => {
   }
 };
 
-export const handleRename = (editItem, newItemName, items, setItems, setEditItem, setNewItemName, listId) => {
+export const handleRename = (editItem, newItemName, items, setItems, setEditItem, setNewItemName, listId, showToast) => {
   if (!editItem || !newItemName.trim()) {
+    showToast("Le nouveau nom de l'élément ne peut pas être vide.", "error");
     return;
   }
 
@@ -137,10 +138,10 @@ export const handleRename = (editItem, newItemName, items, setItems, setEditItem
     };
     update(ref(db), updates)
       .then(() => {
-        console.log("Item updated successfully");
+        showToast("Élément renommé avec succès", "success");
       })
       .catch((error) => {
-        console.error("Error updating item: ", error);
+        showToast("Erreur lors du renommage de l'élément : " + error.message, "error");
       });
   }
 
@@ -203,17 +204,18 @@ export const handleRenameCategory = (
   newCategoryName,
   items,
   setItems,
-  listId
+  listId,
+  showToast
 ) => {
   if (!newCategoryName.trim()) {
-    console.error("Le nouveau nom de la catégorie ne peut pas être vide.");
+    showToast("Le nouveau nom de la catégorie ne peut pas être vide.", "error");
     return;
   }
 
   // Vérifier si la catégorie existe déjà
   const categoryExists = items.some(([key]) => key === newCategoryName);
   if (categoryExists) {
-    console.error("Une catégorie avec ce nom existe déjà.");
+    showToast("Une catégorie avec ce nom existe déjà.", "error");
     return;
   }
 
@@ -236,10 +238,10 @@ export const handleRenameCategory = (
     };
     update(ref(db), updates)
       .then(() => {
-        console.log("Catégorie renommée avec succès");
+        showToast("Catégorie renommée avec succès", "success");
       })
       .catch((error) => {
-        console.error("Erreur lors du renommage de la catégorie : ", error);
+        showToast("Erreur lors du renommage de la catégorie : " + error.message, "error");
       });
   }
 };

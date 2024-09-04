@@ -1,8 +1,17 @@
 import { Check, Delete, Edit } from "@mui/icons-material";
 import { IconButton, TextField, Typography } from "@mui/material";
+import { styled } from "@mui/system";
 import React, { useEffect, useRef, useState } from "react";
 import { Draggable } from "react-beautiful-dnd";
 import { StyledCard } from "./StyledComponents";
+
+const MobileStyledCard = styled(StyledCard)({
+  "@media (max-width: 767px)": {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    padding: "10px",
+  },
+});
 
 const ItemCard = ({
   category,
@@ -60,6 +69,22 @@ const ItemCard = ({
     handleRename,
   ]);
 
+  const handleKeyDown = (e) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      handleRename(
+        editItem,
+        newItemName,
+        items,
+        setItems,
+        setEditItem,
+        setNewItemName,
+        listId
+      );
+      setIsEditing(false); // Reset isEditing state after rename
+    }
+  };
+
   return (
     <Draggable
       key={`${category}-${itemIndex}`}
@@ -72,7 +97,7 @@ const ItemCard = ({
           {...provided.draggableProps}
           {...provided.dragHandleProps}
         >
-          <StyledCard
+          <MobileStyledCard
             className={
               typeof item === "object" && item.completed ? "completed" : ""
             }
@@ -93,6 +118,7 @@ const ItemCard = ({
                 }}
                 onFocus={() => setIsEditing(true)}
                 onBlur={() => setIsEditing(false)}
+                onKeyDown={handleKeyDown}
               />
             ) : (
               <Typography variant="h6">
@@ -134,7 +160,7 @@ const ItemCard = ({
                 <Delete />
               </IconButton>
             </div>
-          </StyledCard>
+          </MobileStyledCard>
         </div>
       )}
     </Draggable>

@@ -1,4 +1,6 @@
-import { Button, Card, Typography } from "@mui/material";
+import DeleteIcon from "@mui/icons-material/Delete";
+import EditIcon from "@mui/icons-material/Edit";
+import { Card, IconButton, Typography } from "@mui/material";
 import { styled } from "@mui/system";
 import React from "react";
 
@@ -24,22 +26,22 @@ const StyledListCard = ({
   <StyledCard onClick={() => onOpenSidePanel(listId)}>
     <Typography variant="h6">{listName ? listName : listId}</Typography>
     <div>
-      <Button
-        onClick={(e) => {
-          e.stopPropagation();
-          onDelete(listId);
-        }}
-      >
-        Effacer
-      </Button>
-      <Button
+      <IconButton
         onClick={(e) => {
           e.stopPropagation();
           onRename(listId);
         }}
       >
-        Renommer
-      </Button>
+        <EditIcon />
+      </IconButton>
+      <IconButton
+        onClick={(e) => {
+          e.stopPropagation();
+          onDelete(listId);
+        }}
+      >
+        <DeleteIcon />
+      </IconButton>
     </div>
   </StyledCard>
 );

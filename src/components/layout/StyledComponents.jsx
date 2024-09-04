@@ -6,6 +6,11 @@ export const StyledDrawer = styled(Drawer)({
     width: "100%",
     maxWidth: "600px",
     padding: "8px",
+    "@media (max-width: 767px)": {
+      width: "100vw", // Utilisez 100vw pour occuper toute la largeur de l'écran
+      left: 0,
+      right: 0,
+    },
   },
 });
 
