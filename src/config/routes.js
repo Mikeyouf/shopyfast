@@ -1,8 +1,9 @@
 import Home from "../screens/Home";
 import Login from "../screens/Login";
 import MesListes from "../screens/MesListes";
-import MonProfil from "../screens/MonProfil";
 import MesPreferences from "../screens/MesPreferences";
+import MonProfil from "../screens/MonProfil";
+import MesRecettes from "../screens/Recettes";
 
 const routes = [{
         path: "",
@@ -32,6 +33,12 @@ const routes = [{
         path: "/mes-preferences",
         component: MesPreferences,
         name: "Mes préférences Screen",
+        protected: true,
+    },
+    {
+        path: "/mes-recettes",
+        component: MesRecettes,
+        name: "Mes recettes Screen",
         protected: true,
     },
 ];

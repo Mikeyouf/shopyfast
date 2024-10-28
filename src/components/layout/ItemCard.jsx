@@ -1,14 +1,14 @@
+import { Draggable } from "@hello-pangea/dnd";
 import { Check, Delete, Edit } from "@mui/icons-material";
 import { IconButton, TextField, Typography } from "@mui/material";
 import { styled } from "@mui/system";
 import React, { useEffect, useRef, useState } from "react";
-import { Draggable } from "react-beautiful-dnd";
 import { StyledCard } from "./StyledComponents";
 
 const MobileStyledCard = styled(StyledCard)({
   "@media (max-width: 767px)": {
     flexDirection: "row",
-    alignItems: "flex-start",
+    alignItems: "center",
     padding: "10px",
   },
 });

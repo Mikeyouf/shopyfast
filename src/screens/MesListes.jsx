@@ -1,8 +1,8 @@
+import { DragDropContext, Draggable, Droppable } from "@hello-pangea/dnd";
 import { Typography } from "@mui/material";
 import { getAuth } from "firebase/auth";
 import { getDatabase, onValue, ref, remove, update } from "firebase/database";
 import React, { useEffect, useState } from "react";
-import { DragDropContext, Draggable, Droppable } from "react-beautiful-dnd";
 import Layout from "../components/layout/Layout";
 import RenameDialog from "../components/layout/RenameDialog";
 import SidePanel from "../components/layout/SidePanel";
@@ -161,7 +161,7 @@ const MesListes = ({
           alignItems: "center",
         }}
       >
-        <Typography variant="h4" gutterBottom>
+        <Typography variant="h5" gutterBottom>
           Mes Listes de Courses
         </Typography>
         <div style={{ width: "100%" }}>

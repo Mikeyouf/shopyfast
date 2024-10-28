@@ -1,4 +1,4 @@
-import { Button, Card, Drawer, Typography } from "@mui/material";
+import { Button, Card, Drawer, IconButton, Typography } from "@mui/material";
 import { styled } from "@mui/system";
 
 export const StyledDrawer = styled(Drawer)({
@@ -7,7 +7,7 @@ export const StyledDrawer = styled(Drawer)({
     maxWidth: "600px",
     padding: "8px",
     "@media (max-width: 767px)": {
-      width: "100vw", // Utilisez 100vw pour occuper toute la largeur de l'écran
+      width: "90vw", // Utilisez 100vw pour occuper toute la largeur de l'écran
       left: 0,
       right: 0,
     },
@@ -16,8 +16,8 @@ export const StyledDrawer = styled(Drawer)({
 
 export const CloseButton = styled(Button)({
   position: "absolute",
-  top: "10px",
-  right: "10px",
+  top: "0",
+  right: "0",
 });
 
 export const StyledCard = styled(Card)({
@@ -39,6 +39,10 @@ export const CategoryCard = styled(Card)({
   marginBottom: "20px",
   padding: "10px",
   backgroundColor: "#e0e0e0",
+});
+
+export const CustomIconButton = styled(IconButton)({
+  padding: "4px",
 });
 
 export const CategoryTitle = styled(Typography)({

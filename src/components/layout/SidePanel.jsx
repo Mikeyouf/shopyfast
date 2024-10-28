@@ -1,8 +1,8 @@
-import { Close } from "@mui/icons-material";
-import { Typography } from "@mui/material";
+import { DragDropContext, Droppable } from "@hello-pangea/dnd";
+import { AddCircle, Cancel } from "@mui/icons-material";
+import { Box, Button, TextField, Typography } from "@mui/material";
 import { styled } from "@mui/system";
 import React, { useEffect, useState } from "react";
-import { DragDropContext, Droppable } from "react-beautiful-dnd";
 import {
   handleDelete,
   handleEdit,
@@ -11,12 +11,13 @@ import {
   saveItemsToFirebase,
   toggleComplete,
 } from "../../services/itemService";
+import { useToast } from "../layout/Toast";
 import Category from "./Category";
 import { CloseButton, StyledDrawer } from "./StyledComponents";
 
 const MobileStyledDrawer = styled(StyledDrawer)({
   "@media (max-width: 767px)": {
-    width: "100vw", // Utilisez 100vw pour occuper toute la largeur de l'écran
+    width: "100vw",
     left: 0,
     right: 0,
   },
@@ -26,6 +27,9 @@ const SidePanel = ({ open, onClose, selectedList, listId }) => {
   const [items, setItems] = useState([]);
   const [editItem, setEditItem] = useState(null);
   const [newItemName, setNewItemName] = useState("");
+  const [newCategoryName, setNewCategoryName] = useState("");
+  const [isAddingCategory, setIsAddingCategory] = useState(false);
+  const toast = useToast();
 
   useEffect(() => {
     if (selectedList) {
@@ -43,6 +47,26 @@ const SidePanel = ({ open, onClose, selectedList, listId }) => {
       setItems(newItems);
     }
   }, [selectedList]);
+
+  const handleAddCategoryClick = () => {
+    setIsAddingCategory(true);
+  };
+
+  const handleAddCategory = () => {
+    if (newCategoryName.trim() === "") return;
+
+    const updatedItems = [...items, [newCategoryName, []]];
+    setItems(updatedItems);
+    setNewCategoryName("");
+    setIsAddingCategory(false);
+
+    try {
+      saveItemsToFirebase(updatedItems, listId);
+      toast("Catégorie ajoutée avec succès !", "success");
+    } catch (error) {
+      toast("Erreur lors de l'ajout de la catégorie.", "error");
+    }
+  };
 
   const onDragEnd = (result) => {
     const { destination, source, type } = result;
@@ -108,9 +132,9 @@ const SidePanel = ({ open, onClose, selectedList, listId }) => {
 
   return (
     <MobileStyledDrawer anchor="right" open={open} onClose={onClose}>
-      <div>
+      <div style={{ paddingTop: "30px" }}>
         <CloseButton onClick={onClose}>
-          <Close />
+          <Cancel />
         </CloseButton>
         {Array.isArray(items) && items.length > 0 ? (
           <DragDropContext onDragEnd={onDragEnd}>
@@ -138,7 +162,8 @@ const SidePanel = ({ open, onClose, selectedList, listId }) => {
                           setItems,
                           setEditItem,
                           setNewItemName,
-                          listId
+                          listId,
+                          toast
                         )
                       }
                       setItems={setItems}
@@ -157,6 +182,33 @@ const SidePanel = ({ open, onClose, selectedList, listId }) => {
             liste.
           </Typography>
         )}
+        {isAddingCategory && (
+          <Box mt={2} display="flex" justifyContent="center">
+            <TextField
+              value={newCategoryName}
+              onChange={(e) => setNewCategoryName(e.target.value)}
+              placeholder="Nom de la nouvelle catégorie"
+              fullWidth
+            />
+            <Button
+              variant="contained"
+              color="primary"
+              onClick={handleAddCategory}
+            >
+              Valider
+            </Button>
+          </Box>
+        )}
+        <Box mt={2} display="flex" justifyContent="center">
+          <Button
+            variant="contained"
+            color="primary"
+            startIcon={<AddCircle />}
+            onClick={handleAddCategoryClick}
+          >
+            Ajouter une catégorie
+          </Button>
+        </Box>
       </div>
     </MobileStyledDrawer>
   );

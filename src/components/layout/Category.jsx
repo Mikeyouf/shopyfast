@@ -1,11 +1,18 @@
-import { Check, Delete, Edit } from "@mui/icons-material";
-import { IconButton, TextField } from "@mui/material";
+import { Draggable, Droppable } from "@hello-pangea/dnd";
+import { AddCircle, Check, Delete, Edit } from "@mui/icons-material";
+import { TextField } from "@mui/material";
 import React, { useState } from "react";
-import { Draggable, Droppable } from "react-beautiful-dnd";
-import { handleRenameCategory } from "../../services/itemService";
-import { useToast } from "../layout/Toast"; // Importez le hook useToast
+import {
+  handleRenameCategory,
+  saveItemsToFirebase,
+} from "../../services/itemService";
+import { useToast } from "../layout/Toast";
 import ItemCard from "./ItemCard";
-import { CategoryCard, CategoryTitle } from "./StyledComponents";
+import {
+  CategoryCard,
+  CategoryTitle,
+  CustomIconButton,
+} from "./StyledComponents";
 
 const Category = ({
   category,
@@ -24,9 +31,11 @@ const Category = ({
   items,
   handleAddCategory,
 }) => {
-  const toast = useToast(); // Appel inconditionnel de useToast
+  const toast = useToast();
   const [isEditing, setIsEditing] = useState(false);
   const [categoryName, setCategoryName] = useState(category);
+  const [newItem, setNewItem] = useState("");
+  const [isAdding, setIsAdding] = useState(false);
 
   const handleCategoryRename = () => {
     handleRenameCategory(
@@ -35,7 +44,7 @@ const Category = ({
       items,
       setItems,
       listId,
-      toast // Utilisez le hook useToast ici
+      toast
     );
     setIsEditing(false);
   };
@@ -44,6 +53,28 @@ const Category = ({
     if (e.key === "Enter") {
       e.preventDefault();
       handleCategoryRename();
+    }
+  };
+
+  const handleAddItem = async () => {
+    if (newItem.trim() === "") return;
+
+    const updatedItems = items.map(([key, value]) => {
+      if (key === category) {
+        return [key, [...value, newItem]];
+      }
+      return [key, value];
+    });
+
+    setItems(updatedItems);
+    setNewItem("");
+    setIsAdding(false);
+
+    try {
+      await saveItemsToFirebase(updatedItems, listId);
+      toast("Élément ajouté avec succès !", "success");
+    } catch (error) {
+      toast("Erreur lors de l'ajout de l'élément.", "error");
     }
   };
 
@@ -56,7 +87,13 @@ const Category = ({
           {...provided.dragHandleProps}
         >
           <CategoryCard>
-            <div style={{ display: "flex", alignItems: "center" }}>
+            <div
+              style={{
+                display: "flex",
+                alignItems: "flex-start",
+                justifyContent: "space-between",
+              }}
+            >
               {isEditing ? (
                 <TextField
                   value={categoryName}
@@ -65,21 +102,26 @@ const Category = ({
                   autoFocus
                 />
               ) : (
-                <CategoryTitle variant="h5" gutterBottom>
+                <CategoryTitle variant="h6" gutterBottom>
                   {category}
                 </CategoryTitle>
               )}
-              <IconButton onClick={() => setIsEditing(!isEditing)}>
-                {isEditing ? <Check /> : <Edit />}
-              </IconButton>
-              <IconButton
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleDelete(category, null, items, setItems, listId);
-                }}
-              >
-                <Delete />
-              </IconButton>
+              <div>
+                <CustomIconButton onClick={() => setIsAdding(!isAdding)}>
+                  <AddCircle />
+                </CustomIconButton>
+                <CustomIconButton onClick={() => setIsEditing(!isEditing)}>
+                  {isEditing ? <Check /> : <Edit />}
+                </CustomIconButton>
+                <CustomIconButton
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleDelete(category, null, items, setItems, listId);
+                  }}
+                >
+                  <Delete />
+                </CustomIconButton>
+              </div>
             </div>
             <Droppable droppableId={category} type="ITEM">
               {(provided) => (
@@ -107,6 +149,25 @@ const Category = ({
                 </div>
               )}
             </Droppable>
+            {isAdding && (
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  marginTop: "10px",
+                }}
+              >
+                <TextField
+                  value={newItem}
+                  onChange={(e) => setNewItem(e.target.value)}
+                  placeholder="Ajouter un nouvel élément"
+                  fullWidth
+                />
+                <CustomIconButton onClick={handleAddItem}>
+                  <Check />
+                </CustomIconButton>
+              </div>
+            )}
           </CategoryCard>
         </div>
       )}

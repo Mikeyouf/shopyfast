@@ -28,7 +28,19 @@ export const ToastProvider = ({ children }) => {
   return (
     <ToastContext.Provider value={showToast}>
       {children}
-      <Snackbar open={toast.open} autoHideDuration={6000} onClose={handleClose}>
+      <Snackbar
+        open={toast.open}
+        autoHideDuration={6000}
+        onClose={handleClose}
+        anchorOrigin={{ vertical: "bottom", horizontal: "center" }} // Change position for mobile
+        sx={{
+          zIndex: 9999, // Ensure the toast is on top
+          maxWidth: "90%", // Reduce width on mobile for better fit
+          "@media (max-width: 600px)": {
+            bottom: "10px", // Add some space from the bottom on mobile
+          },
+        }}
+      >
         <Alert
           onClose={handleClose}
           severity={toast.severity}

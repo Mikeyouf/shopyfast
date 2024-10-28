@@ -1,18 +1,28 @@
 import PhotoCameraIcon from "@mui/icons-material/PhotoCamera";
 import { Box, IconButton } from "@mui/material";
 import { getDownloadURL, ref, uploadBytes } from "firebase/storage";
-import React, { useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { auth, storage } from "../../config/firebase";
 import { saveShoppingListToFirebase } from "../../services/firebaseService";
 import { analyzeImageWithGPT4Vision } from "../../services/openAiService";
+import { checkCameraPermissions } from "../../serviceWorkerRegistration";
 import Spinner from "../utils/Spinner";
 
 const Footer = () => {
   const fileInputRef = useRef(null);
   const [loading, setLoading] = useState(false); // État de chargement
 
+  useEffect(() => {
+    // Vérifier les permissions caméra lorsque le composant est monté
+    checkCameraPermissions();
+  }, []);
+
   const handleCameraIconClick = () => {
     fileInputRef.current.click(); // Simule un clic sur l'input file
+  };
+
+  const handleTouchStart = () => {
+    fileInputRef.current.click(); // Simule un clic sur mobile (touch)
   };
 
   async function uploadImageAndGetURL(file) {
@@ -53,6 +63,7 @@ const Footer = () => {
       <input
         type="file"
         accept="image/*"
+        capture="camera"
         style={{ display: "none" }}
         ref={fileInputRef}
         onChange={handleFileChange}
@@ -69,8 +80,10 @@ const Footer = () => {
         <IconButton
           color="primary"
           aria-label="upload picture"
-          component="span"
+          component="label" // Composant utilisé comme label pour améliorer la compatibilité mobile
           onClick={handleCameraIconClick}
+          onTouchStart={handleTouchStart} // Ajout de onTouchStart pour mobile
+          sx={{ cursor: "pointer" }} // Assure que le curseur de la souris est correct
         >
           <PhotoCameraIcon />
         </IconButton>
