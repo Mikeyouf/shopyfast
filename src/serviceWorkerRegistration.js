@@ -103,20 +103,25 @@ export function unregister() {
 
 // Fonction pour vérifier les permissions de la caméra
 export function checkCameraPermissions() {
-  if ('permissions' in navigator) {
-    navigator.permissions.query({
-      name: 'camera'
-    }).then((result) => {
-      if (result.state === 'denied') {
-        console.log('Permission d\'accès à la caméra refusée.');
-        alert('L\'application nécessite l\'accès à la caméra pour fonctionner.');
-      } else if (result.state === 'prompt') {
-        console.log('Demande d\'accès à la caméra en cours.');
-      } else if (result.state === 'granted') {
+  if ('mediaDevices' in navigator && 'getUserMedia' in navigator.mediaDevices) {
+    navigator.mediaDevices.getUserMedia({
+        video: true
+      })
+      .then((stream) => {
         console.log('Accès à la caméra déjà accordé.');
-      }
-    }).catch((err) => {
-      console.error('Erreur lors de la vérification des permissions :', err);
-    });
+        // On arrête le flux si on ne veut pas encore utiliser la caméra
+        stream.getTracks().forEach(track => track.stop());
+      })
+      .catch((err) => {
+        if (err.name === 'NotAllowedError') {
+          console.log('Permission d\'accès à la caméra refusée.');
+          alert('L\'application nécessite l\'accès à la caméra pour fonctionner.');
+        } else {
+          console.error('Erreur lors de l\'accès à la caméra :', err);
+        }
+      });
+  } else {
+    console.error('Les MediaDevices ne sont pas supportés par ce navigateur.');
+    alert('Votre navigateur ne prend pas en charge l\'accès à la caméra.');
   }
 }
