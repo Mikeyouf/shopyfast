@@ -69,7 +69,7 @@ export const analyzeImageWithGPT4Vision = async (imageUrl) => {
                 }
             ]
         }],
-        max_tokens: 1500 // Ajustez ce paramètre pour contrôler le coût
+        max_tokens: 1500
     };
 
     try {
@@ -83,7 +83,13 @@ export const analyzeImageWithGPT4Vision = async (imageUrl) => {
         });
 
         if (!response.ok) {
-            throw new Error('Failed to analyze image with OpenAI GPT-4 Vision');
+            let errorMessage = 'Failed to analyze image with OpenAI GPT-4 Vision';
+            if (response.status >= 400 && response.status < 500) {
+                errorMessage += ' - Client Error: ' + response.statusText;
+            } else if (response.status >= 500) {
+                errorMessage += ' - Server Error: ' + response.statusText;
+            }
+            throw new Error(errorMessage);
         }
 
         const result = await response.json();
@@ -91,19 +97,19 @@ export const analyzeImageWithGPT4Vision = async (imageUrl) => {
 
         const messageContent = result.choices[0].message.content;
 
-        // Utiliser une regex pour extraire le bloc JSON
         const jsonMatch = messageContent.match(/```json\n([\s\S]*?)\n```/);
 
         if (jsonMatch && jsonMatch[1]) {
             const parsedContent = JSON.parse(jsonMatch[1]);
-            console.log('Parsed Content:', parsedContent); // Log pour inspecter les données
-            return parsedContent; // Pas besoin de classifierItems ici
+            console.log('Parsed Content:', parsedContent);
+            return parsedContent;
         } else {
-            console.error('Invalid JSON content:', messageContent);
+            alert('Invalid JSON content:', messageContent);
             throw new Error('Invalid JSON content in API response');
         }
     } catch (error) {
         console.error('Error calling OpenAI GPT-4o API:', error);
+        alert('Error calling OpenAI GPT-4o API:', error.message);
         throw error;
     }
 };

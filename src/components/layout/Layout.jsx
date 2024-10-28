@@ -1,11 +1,10 @@
-// components/Layout.js
-import React, { useState } from 'react';
-import Header from './Header';
-import { Box, Drawer } from '@mui/material';
-import Menu from './Menu';
-import Footer from './Footer';
+import { Box, Drawer } from "@mui/material";
+import React, { useState } from "react";
+import Footer from "./Footer";
+import Header from "./Header";
+import Menu from "./Menu";
 
-const Layout = ({ children }) => {
+const Layout = ({ children = null }) => {
   const [isMenuOpen, setMenuOpen] = useState(false);
 
   const toggleMenu = () => {
@@ -13,9 +12,9 @@ const Layout = ({ children }) => {
   };
 
   const handleOpenCamera = () => {
-    const input = document.createElement('input');
-    input.type = 'file';
-    input.accept = 'image/*';
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = "image/*";
     input.capture = true; // Ouvre directement l'appareil photo sur les appareils mobiles
     input.onchange = (e) => {
       const file = e.target.files[0];
@@ -23,7 +22,7 @@ const Layout = ({ children }) => {
       console.log(file);
     };
     input.click();
-  };  
+  };
 
   return (
     <>
@@ -33,22 +32,22 @@ const Layout = ({ children }) => {
         open={isMenuOpen}
         onClose={toggleMenu}
         sx={{
-            '& .MuiDrawer-paper': {
-              width: '80%',
-              bgcolor: 'background.paper', // Ou toute autre couleur de votre choix
-            },
-          }}
-        >
-        <Menu/>
+          "& .MuiDrawer-paper": {
+            width: "80%",
+            bgcolor: "background.paper", // Ou toute autre couleur de votre choix
+          },
+        }}
+      >
+        <Menu />
         <Box
-            sx={{ width: "80%" }}
-            role="presentation"
-            onClick={toggleMenu}
-            onKeyDown={toggleMenu}
+          sx={{ width: "80%" }}
+          role="presentation"
+          onClick={toggleMenu}
+          onKeyDown={toggleMenu}
         >
-            {/* Liens du menu ou composant de navigation */}
+          {/* Liens du menu ou composant de navigation */}
         </Box>
-        </Drawer>
+      </Drawer>
       <main>{children}</main>
       <Footer onCameraClick={handleOpenCamera} />
     </>

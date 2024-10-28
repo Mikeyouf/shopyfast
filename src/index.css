@@ -1,13 +1,22 @@
 body {
   margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen",
+    "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue",
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
 code {
-  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
+  font-family: source-code-pro, Menlo, Monaco, Consolas, "Courier New",
     monospace;
+}
+
+/* Ajoutez ce CSS pour corriger l'affichage du SidePanel */
+.MuiDrawer-paperAnchorRight {
+  width: 100vw; /* Utilisez 100vw pour occuper toute la largeur de l'écran */
+  max-width: 100vw; /* Assurez-vous que le panneau ne dépasse pas la largeur de l'écran */
+  left: 0; /* Assurez-vous que le panneau commence à partir du bord gauche */
+  right: 0; /* Assurez-vous que le panneau se termine au bord droit */
+  box-shadow: -2px 0 5px rgba(0, 0, 0, 0.5);
 }

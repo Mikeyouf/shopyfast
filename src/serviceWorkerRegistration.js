@@ -19,9 +19,7 @@ export function register(config) {
       if (isLocalhost) {
         checkValidServiceWorker(swUrl, config);
         navigator.serviceWorker.ready.then(() => {
-          console.log(
-            'Cette application web est servie en cache-first par un service worker.'
-          );
+          console.log('Cette application web est servie en cache-first par un service worker.');
         });
       } else {
         registerValidSW(swUrl, config);
@@ -43,9 +41,11 @@ function registerValidSW(swUrl, config) {
           if (installingWorker.state === 'installed') {
             if (navigator.serviceWorker.controller) {
               console.log('Nouveau contenu disponible; veuillez actualiser.');
+              // Force la mise à jour de la page si du nouveau contenu est disponible
               if (config && config.onUpdate) {
                 config.onUpdate(registration);
               }
+              window.location.reload(); // Rafraîchir la page automatiquement
             } else {
               console.log('Contenu mis en cache pour une utilisation hors ligne.');
               if (config && config.onSuccess) {
@@ -73,19 +73,19 @@ function checkValidServiceWorker(swUrl, config) {
         response.status === 404 ||
         (contentType != null && contentType.indexOf('javascript') === -1)
       ) {
+        // Aucun service worker trouvé, probablement un problème de version
         navigator.serviceWorker.ready.then((registration) => {
           registration.unregister().then(() => {
             window.location.reload();
           });
         });
       } else {
+        // Enregistrer le service worker valide
         registerValidSW(swUrl, config);
       }
     })
     .catch(() => {
-      console.log(
-        'Pas de connexion Internet trouvée. L\'application fonctionne en mode hors ligne.'
-      );
+      console.log('Pas de connexion Internet trouvée. L\'application fonctionne en mode hors ligne.');
     });
 }
 
@@ -98,5 +98,25 @@ export function unregister() {
       .catch((error) => {
         console.error(error.message);
       });
+  }
+}
+
+// Fonction pour vérifier les permissions de la caméra
+export function checkCameraPermissions() {
+  if ('permissions' in navigator) {
+    navigator.permissions.query({
+      name: 'camera'
+    }).then((result) => {
+      if (result.state === 'denied') {
+        console.log('Permission d\'accès à la caméra refusée.');
+        alert('L\'application nécessite l\'accès à la caméra pour fonctionner.');
+      } else if (result.state === 'prompt') {
+        console.log('Demande d\'accès à la caméra en cours.');
+      } else if (result.state === 'granted') {
+        console.log('Accès à la caméra déjà accordé.');
+      }
+    }).catch((err) => {
+      console.error('Erreur lors de la vérification des permissions :', err);
+    });
   }
 }

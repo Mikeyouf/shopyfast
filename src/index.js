@@ -1,6 +1,7 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
 import App from "./App";
+import { ToastProvider } from "./components/layout/Toast"; // Importez le ToastProvider
 import { FirebaseProvider } from "./config/firebaseContext";
 import "./index.css";
 import reportWebVitals from "./reportWebVitals";
@@ -9,7 +10,9 @@ import * as serviceWorkerRegistration from "./serviceWorkerRegistration";
 const root = ReactDOM.createRoot(document.getElementById("root"));
 root.render(
   <FirebaseProvider>
-    <App />
+    <ToastProvider>
+      <App />
+    </ToastProvider>
   </FirebaseProvider>
 );
 
