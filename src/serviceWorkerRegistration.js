@@ -41,11 +41,14 @@ function registerValidSW(swUrl, config) {
           if (installingWorker.state === 'installed') {
             if (navigator.serviceWorker.controller) {
               console.log('Nouveau contenu disponible; veuillez actualiser.');
-              // Force la mise à jour de la page si du nouveau contenu est disponible
+
+              // Notifie l'utilisateur et propose de recharger
               if (config && config.onUpdate) {
                 config.onUpdate(registration);
               }
-              window.location.reload(); // Rafraîchir la page automatiquement
+
+              // Recharge automatiquement pour mettre à jour
+              window.location.reload();
             } else {
               console.log('Contenu mis en cache pour une utilisation hors ligne.');
               if (config && config.onSuccess) {
@@ -57,7 +60,7 @@ function registerValidSW(swUrl, config) {
       };
     })
     .catch((error) => {
-      console.error('Erreur lors de l\'enregistrement du service worker:', error);
+      console.error("Erreur lors de l'enregistrement du service worker:", error);
     });
 }
 
@@ -73,19 +76,17 @@ function checkValidServiceWorker(swUrl, config) {
         response.status === 404 ||
         (contentType != null && contentType.indexOf('javascript') === -1)
       ) {
-        // Aucun service worker trouvé, probablement un problème de version
         navigator.serviceWorker.ready.then((registration) => {
           registration.unregister().then(() => {
             window.location.reload();
           });
         });
       } else {
-        // Enregistrer le service worker valide
         registerValidSW(swUrl, config);
       }
     })
     .catch(() => {
-      console.log('Pas de connexion Internet trouvée. L\'application fonctionne en mode hors ligne.');
+      console.log("Pas de connexion Internet trouvée. L'application fonctionne en mode hors ligne.");
     });
 }
 
@@ -109,19 +110,18 @@ export function checkCameraPermissions() {
       })
       .then((stream) => {
         console.log('Accès à la caméra déjà accordé.');
-        // On arrête le flux si on ne veut pas encore utiliser la caméra
         stream.getTracks().forEach(track => track.stop());
       })
       .catch((err) => {
         if (err.name === 'NotAllowedError') {
-          console.log('Permission d\'accès à la caméra refusée.');
-          alert('L\'application nécessite l\'accès à la caméra pour fonctionner.');
+          console.log("Permission d'accès à la caméra refusée.");
+          alert("L'application nécessite l'accès à la caméra pour fonctionner.");
         } else {
-          console.error('Erreur lors de l\'accès à la caméra :', err);
+          console.error("Erreur lors de l'accès à la caméra :", err);
         }
       });
   } else {
-    console.error('Les MediaDevices ne sont pas supportés par ce navigateur.');
-    alert('Votre navigateur ne prend pas en charge l\'accès à la caméra.');
+    console.error("Les MediaDevices ne sont pas supportés par ce navigateur.");
+    alert("Votre navigateur ne prend pas en charge l'accès à la caméra.");
   }
 }

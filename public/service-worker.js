@@ -10,6 +10,8 @@ self.addEventListener("install", (event) => {
       return cache.addAll(urlsToCache);
     })
   );
+  // Force l'activation immédiate du nouveau service worker
+  self.skipWaiting();
 });
 
 // Activation du service worker
@@ -22,11 +24,13 @@ self.addEventListener("activate", (event) => {
           if (!cacheWhitelist.includes(cacheName)) {
             return caches.delete(cacheName);
           }
-          return null; // Ajoutez cette ligne pour retourner une valeur
+          return null;
         })
       );
     })
   );
+  // Prend immédiatement le contrôle des clients existants
+  self.clients.claim();
 });
 
 // Interception des requêtes réseau

@@ -27,7 +27,7 @@ const Footer = () => {
   const [imageUrl, setImageUrl] = useState(null);
   const [analysisResult, setAnalysisResult] = useState(null);
   const { shoppingLists, setShoppingLists } = useShoppingList();
-  const [selectedList, setSelectedList] = useState(null);
+  const [selectedList, setSelectedList] = useState("");
 
   const fetchShoppingLists = useCallback(async () => {
     try {
@@ -59,6 +59,7 @@ const Footer = () => {
     }
     const uid = auth.currentUser.uid;
     const storageRef = ref(storage, `images/${uid}/${file.name}`);
+    console.log("storageRef : ", storageRef);
     await uploadBytes(storageRef, file);
     return getDownloadURL(storageRef);
   }
@@ -213,7 +214,7 @@ const Footer = () => {
             Créer une nouvelle liste
           </Button>
           <Select
-            value={selectedList}
+            value={selectedList || ""}
             onChange={(e) => setSelectedList(e.target.value)}
             displayEmpty
             sx={{ mt: 2, width: "100%" }}
