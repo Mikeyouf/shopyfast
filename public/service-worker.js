@@ -29,8 +29,15 @@ self.addEventListener("activate", (event) => {
       );
     })
   );
-  // Prend immédiatement le contrôle des clients existants
-  self.clients.claim();
+
+  // Prend immédiatement le contrôle des clients existants et envoie un message de mise à jour
+  self.clients.claim().then(() => {
+    self.clients.matchAll().then((clients) => {
+      clients.forEach((client) => client.postMessage({
+        type: 'UPDATE_AVAILABLE'
+      }));
+    });
+  });
 });
 
 // Interception des requêtes réseau

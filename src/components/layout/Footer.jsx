@@ -41,13 +41,12 @@ const Footer = () => {
 
   useEffect(() => {
     checkCameraPermissions();
-    const unsubscribe = fetchShoppingLists();
-    return () => {
-      if (unsubscribe) {
-        unsubscribe();
-      }
-    };
+    fetchShoppingLists();
   }, [fetchShoppingLists]);
+
+  useEffect(() => {
+    console.log("Changement d'état de openModal : ", openModal);
+  }, [openModal]);
 
   const handleCameraIconClick = () => {
     fileInputRef.current.click();
@@ -66,7 +65,9 @@ const Footer = () => {
     const storageRef = ref(storage, `images/${uid}/${file.name}`);
     console.log("storageRef : ", storageRef);
     await uploadBytes(storageRef, file);
-    return getDownloadURL(storageRef);
+    const url = await getDownloadURL(storageRef);
+    console.log("Image URL obtenue :", url);
+    return url;
   }
 
   const handleFileChange = async (event) => {
@@ -77,15 +78,15 @@ const Footer = () => {
     try {
       const url = await uploadImageAndGetURL(file);
       setImageUrl(url);
-      console.log("Image URL:", url);
 
       const result = await analyzeImageWithGPT4Vision(url);
       setAnalysisResult(result);
-      console.log("Analysis Result:", result);
+      console.log("Résultat de l'analyse :", result);
 
-      setOpenModal(true); // Ouvrir le modal après l'analyse
+      setOpenModal(true);
+      console.log("Modal ouvert : ", openModal);
     } catch (error) {
-      console.error("Error processing image:", error);
+      console.error("Erreur lors du traitement de l'image :", error);
     } finally {
       setLoading(false);
     }
@@ -93,11 +94,14 @@ const Footer = () => {
 
   const handleCreateNewList = async () => {
     if (analysisResult) {
+      console.log(
+        "Création d'une nouvelle liste avec les résultats :",
+        analysisResult
+      );
       await saveShoppingListToFirebase(analysisResult);
-      console.log("Nouvelle liste créée avec succès !");
       setShoppingLists((prevLists) => [...prevLists, analysisResult]);
     }
-    setOpenModal(false);
+    // setOpenModal(false);
   };
 
   const handleUpdateExistingList = () => {
@@ -106,43 +110,48 @@ const Footer = () => {
       return;
     }
 
+    // Récupérer l'objet complet de la liste à partir de `shoppingLists`
+    const listToUpdate = shoppingLists.find((list) => list.id === selectedList);
+
+    if (!listToUpdate) {
+      console.error("Impossible de trouver la liste sélectionnée.");
+      return;
+    }
+
     // Créer un ensemble pour les éléments existants dans la liste sélectionnée
     const existingItemsSet = new Set();
 
-    // Ajouter tous les éléments existants de la liste sélectionnée à l'ensemble
-    Object.keys(selectedList).forEach((category) => {
-      if (Array.isArray(selectedList[category])) {
-        selectedList[category].forEach((item) => {
+    Object.keys(listToUpdate).forEach((category) => {
+      if (Array.isArray(listToUpdate[category])) {
+        listToUpdate[category].forEach((item) => {
           existingItemsSet.add(item);
         });
       }
     });
 
-    // Parcourir chaque catégorie de la nouvelle liste
+    // Parcourir chaque catégorie de `analysisResult`
     Object.keys(analysisResult).forEach((category) => {
       if (Array.isArray(analysisResult[category])) {
-        // Si la catégorie existe déjà dans la liste sélectionnée, ajoutez les nouveaux éléments
-        if (selectedList[category]) {
+        if (listToUpdate[category]) {
           analysisResult[category].forEach((item) => {
             if (!existingItemsSet.has(item)) {
-              selectedList[category].push(item);
-              existingItemsSet.add(item); // Ajouter l'élément à l'ensemble
+              listToUpdate[category].push(item);
+              existingItemsSet.add(item);
             }
           });
         } else {
-          // Sinon, ajoutez la catégorie entière
-          selectedList[category] = analysisResult[category].filter(
+          listToUpdate[category] = analysisResult[category].filter(
             (item) => !existingItemsSet.has(item)
           );
-          // Mettre à jour l'ensemble avec les nouveaux éléments
-          selectedList[category].forEach((item) => existingItemsSet.add(item));
+          listToUpdate[category].forEach((item) => existingItemsSet.add(item));
         }
       }
     });
 
-    console.log("Liste mise à jour sans doublons :", selectedList);
+    console.log("Liste mise à jour sans doublons :", listToUpdate);
+
     // Sauvegarder la liste mise à jour dans Firebase
-    saveShoppingListToFirebase(selectedList).then(() => {
+    saveShoppingListToFirebase(listToUpdate).then(() => {
       fetchShoppingLists(); // Mettre à jour les listes après la mise à jour
     });
     setOpenModal(false);

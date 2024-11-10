@@ -26,6 +26,14 @@ export function register(config) {
       }
     });
   }
+
+  // Écouteur pour détecter les messages du service worker
+  navigator.serviceWorker.addEventListener('message', (event) => {
+    if (event.data && event.data.type === 'UPDATE_AVAILABLE') {
+      alert("Une mise à jour est disponible ! Veuillez actualiser la page.");
+      window.location.reload(); // recharge la page pour la mise à jour
+    }
+  });
 }
 
 function registerValidSW(swUrl, config) {
