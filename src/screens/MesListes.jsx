@@ -36,7 +36,7 @@ const MesListes = ({
     const userId = user.uid;
     const listRef = ref(db, "users/" + userId + "/shoppingLists");
 
-    onValue(listRef, (snapshot) => {
+    const unsubscribe = onValue(listRef, (snapshot) => {
       const data = snapshot.val();
       if (data) {
         const lists = Object.keys(data).map((key) => ({
@@ -51,6 +51,10 @@ const MesListes = ({
         setExistingListNames([]);
       }
     });
+
+    return () => {
+      unsubscribe(); // Nettoyer l'écouteur Firebase
+    };
   }, [auth, db]);
 
   const handleDeleteList = (listId) => {

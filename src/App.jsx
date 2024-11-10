@@ -11,7 +11,7 @@ function App() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    auth.onAuthStateChanged((user) => {
+    const unsubscribe = auth.onAuthStateChanged((user) => {
       if (user) {
         console.info("User detected.");
       } else {
@@ -19,6 +19,10 @@ function App() {
       }
       setLoading(false);
     });
+
+    return () => {
+      unsubscribe(); // Nettoyer l'écouteur Firebase
+    };
   }, []);
 
   if (loading) {

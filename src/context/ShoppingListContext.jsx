@@ -21,7 +21,7 @@ export const ShoppingListProvider = ({ children }) => {
     const userId = user.uid;
     const listRef = ref(db, "users/" + userId + "/shoppingLists");
 
-    onValue(listRef, (snapshot) => {
+    const unsubscribe = onValue(listRef, (snapshot) => {
       const data = snapshot.val();
       if (data) {
         const lists = Object.keys(data).map((key) => ({
@@ -34,6 +34,14 @@ export const ShoppingListProvider = ({ children }) => {
         setShoppingLists([]);
       }
     });
+
+    return () => {
+      if (typeof unsubscribe === "function") {
+        unsubscribe(); // Nettoyer l'abonnement
+      } else {
+        console.error("unsubscribe is not a function");
+      }
+    };
   }, [auth, db]);
 
   return (

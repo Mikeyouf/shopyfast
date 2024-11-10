@@ -45,7 +45,7 @@ const ItemCard = ({
         setNewItemName,
         listId
       );
-      setIsEditing(false); // Reset isEditing state after rename
+      setIsEditing(false);
     };
 
     const button = checkButtonRef.current;

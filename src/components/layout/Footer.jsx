@@ -41,7 +41,12 @@ const Footer = () => {
 
   useEffect(() => {
     checkCameraPermissions();
-    fetchShoppingLists();
+    const unsubscribe = fetchShoppingLists();
+    return () => {
+      if (unsubscribe) {
+        unsubscribe();
+      }
+    };
   }, [fetchShoppingLists]);
 
   const handleCameraIconClick = () => {
@@ -224,7 +229,7 @@ const Footer = () => {
               Sélectionnez une liste
             </MenuItem>
             {shoppingLists.map((list) => (
-              <MenuItem key={list.id} value={list}>
+              <MenuItem key={list.id} value={list.id}>
                 {list.name}
               </MenuItem>
             ))}
