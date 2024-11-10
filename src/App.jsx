@@ -5,6 +5,7 @@ import AuthChecker from "./components/auth/AuthChecker";
 import Center from "./components/utils/Center";
 import { auth } from "./config/firebase";
 import routes from "./config/routes";
+import { ShoppingListProvider } from "./context/ShoppingListContext";
 
 function App() {
   const [loading, setLoading] = useState(true);
@@ -29,7 +30,7 @@ function App() {
   }
 
   return (
-    <div>
+    <ShoppingListProvider>
       <Router>
         <Routes>
           {routes.map((route, index) => (
@@ -49,7 +50,7 @@ function App() {
           ))}
         </Routes>
       </Router>
-    </div>
+    </ShoppingListProvider>
   );
 }
 

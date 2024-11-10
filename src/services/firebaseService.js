@@ -1,5 +1,8 @@
 // services/firebaseService.js
 import {
+  getAuth
+} from "firebase/auth";
+import {
   get,
   push,
   ref,
@@ -47,6 +50,37 @@ export const saveShoppingListToFirebase = async (list) => {
     }
   } catch (error) {
     console.error("Error saving shopping list to Firebase:", error);
+    throw error;
+  }
+};
+
+export const getShoppingListsFromFirebase = async () => {
+  try {
+    const auth = getAuth();
+    const user = auth.currentUser;
+    if (!user) {
+      console.error("Aucun utilisateur connecté");
+      return [];
+    }
+
+    const userId = user.uid;
+    const shoppingListsRef = ref(database, `users/${userId}/shoppingLists`);
+    const snapshot = await get(shoppingListsRef);
+
+    if (snapshot.exists()) {
+      const data = snapshot.val();
+      const lists = Object.keys(data).map((key) => ({
+        id: key,
+        ...data[key],
+      }));
+      const orderedLists = lists.sort((a, b) => (a.order > b.order ? 1 : -1));
+      return orderedLists;
+    } else {
+      console.log("Aucune donnée trouvée.");
+      return [];
+    }
+  } catch (error) {
+    console.error("Erreur lors de la récupération des listes de courses :", error);
     throw error;
   }
 };

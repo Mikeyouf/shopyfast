@@ -48,7 +48,8 @@ export const convertImageToBase64 = (file) => new Promise((resolve, reject) => {
 
 export const analyzeImageWithGPT4Vision = async (imageUrl) => {
     const examples = Object.entries(shoppingListModels).map(([category, items]) => {
-        return `${category}: ${items.join(', ')}`;
+        const displayName = getCategoryDisplayName(category); // Utilisation de la fonction pour obtenir le nom lisible
+        return `${displayName}: ${items.join(', ')}`;
     }).join('\n');
 
     const prompt = `Analyse cette image et extraits-en tout le texte que tu trouves. Il s'agit d'une liste de courses. Retourne les résultats sous forme de JSON structuré avec des catégories comme clés et les éléments comme valeurs de tableau. Exemple : {'fruits': ['Citron', 'Pomme'], 'produits_laitiers': ['Lait', 'Fromage']}. Enlève les doublons, corrige les fautes d'orthographe si nécessaire et assure-toi que chaque élément est dans la catégorie appropriée.\n\nVoici quelques exemples de catégories et d'éléments:\n${examples}`;
