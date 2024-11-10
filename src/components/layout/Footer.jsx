@@ -214,7 +214,7 @@ const Footer = () => {
             Créer une nouvelle liste
           </Button>
           <Select
-            value={selectedList || ""}
+            value={selectedList}
             onChange={(e) => setSelectedList(e.target.value)}
             displayEmpty
             sx={{ mt: 2, width: "100%" }}

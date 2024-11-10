@@ -38,14 +38,24 @@ export const saveShoppingListToFirebase = async (list) => {
         console.log("Liste mise à jour avec succès !");
       } else {
         // Si la liste n'existe pas, crée une nouvelle entrée
-        const newListRef = push(shoppingListsRef); // Générer une nouvelle clé unique pour la liste de courses
-        await set(newListRef, list);
+        const newListRef = push(shoppingListsRef);
+        const newListId = newListRef.key;
+        await set(newListRef, {
+          ...list,
+          id: newListId,
+          name: newListId
+        });
         console.log("Nouvelle liste créée avec succès !");
       }
     } else {
       // Si aucune liste n'existe, crée une nouvelle entrée
-      const newListRef = push(shoppingListsRef); // Générer une nouvelle clé unique pour la liste de courses
-      await set(newListRef, list);
+      const newListRef = push(shoppingListsRef);
+      const newListId = newListRef.key; // Obtenir l'ID unique généré
+      await set(newListRef, {
+        ...list,
+        id: newListId,
+        name: newListId
+      }); // Ajouter l'ID à la liste
       console.log("Nouvelle liste créée avec succès !");
     }
   } catch (error) {
